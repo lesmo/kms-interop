@@ -27,7 +27,7 @@ namespace Kms.Interop.OAuth.SocialClients {
             set;
         }
 
-        public OAuthCryptoSet Token {
+        public  OAuthCryptoSet Token {
             get {
                 return this._token;
             }
@@ -40,9 +40,33 @@ namespace Kms.Interop.OAuth.SocialClients {
         }
         private OAuthCryptoSet _token;
 
+        /// <summary>
+        ///     Token obtenido por el cliente en App Móvil o Escritorio.
+        /// </summary>
+        public string AppToken {
+            get {
+                if ( this.Token == null)
+                    return null;
+                else
+                    return this.Token.Key;
+            }
+        }
+
+        /// <summary>
+        ///     Token obtenido por el cliente en Servidor.
+        /// </summary>
+        public string ServerToken {
+            get {
+                if ( this.Token == null )
+                    return null;
+                else
+                    return this.Token.Secret;
+            }
+        }
+
         public string Code {
             get;
-            set;
+            private set;
         }
 
         public bool CurrentlyHasAccessToken {
@@ -168,6 +192,10 @@ namespace Kms.Interop.OAuth.SocialClients {
                 throw new InvalidOperationException(
                     "Current Facebook Client configuration does not include Client Secret."
                 );
+            if ( this.Token != null )
+                throw new InvalidOperationException(
+                    "Current Facebook Client configuration already contains a Token exchanged obtained via Code."
+                );
 
             OAuthResponse<NameValueCollection> response
                 = this.RequestSimpleNameValue(
@@ -191,8 +219,7 @@ namespace Kms.Interop.OAuth.SocialClients {
 
             this.Token
                 = new OAuthCryptoSet(
-                    response.Response.Get("access_token"),
-                    null
+                    response.Response.Get("access_token")
                 );
             this.CurrentlyHasAccessToken
                 = true;
@@ -467,21 +494,39 @@ namespace Kms.Interop.OAuth.SocialClients {
             );
         }
 
+        public string UserID {
+            get {
+                if ( this._userID == null && ! ValidateSession() )
+                    throw new OAuthUnexpectedResponse();
+
+                return this._userID;
+            }
+        }
+        private string _userID;
+        
         public string UserName {
             get {
-                if ( this._userName == null ) {
-                    this._userName
-                        = this.RequestJson(
-                            HttpRequestMethod.GET,
-                            "/me?fields=name"
-                        ).Response.SelectToken(
-                            "$.name"
-                        ).ToString();
-                }
+                if ( this._userName == null && !ValidateSession() )
+                    throw new OAuthUnexpectedResponse();
 
                 return this._userName;
             }
         }
         private string _userName;
+
+        public bool ValidateSession() {
+            var jsonResponse = this.RequestJson(
+                HttpRequestMethod.GET,
+                "/me"
+            ).Response;
+
+            this._userName = jsonResponse.SelectToken("$.name").ToString();
+            this._userID   = jsonResponse.SelectToken("$.id").ToString();
+
+            return !(
+                string.IsNullOrEmpty(this._userName)
+                || string.IsNullOrEmpty(this._userID)
+            );
+        }
     }
 }

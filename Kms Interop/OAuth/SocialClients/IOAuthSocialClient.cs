@@ -17,5 +17,10 @@ namespace Kms.Interop.OAuth.SocialClients {
         string UserName {
             get;
         }
+        string UserID {
+            get;
+        }
+
+        bool ValidateSession();
     }
 }

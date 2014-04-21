@@ -28,7 +28,7 @@ namespace Kms.Interop.OAuth {
         /// <param name="secret">
         ///     Token Secret o Consumer Secret (API Secret de KMS)
         /// </param>
-        public OAuthCryptoSet(string key, string secret) {
+        public OAuthCryptoSet(string key, string secret = null) {
             this.Key
                 = key;
             this.Secret

@@ -54,19 +54,43 @@ namespace Kms.Interop.OAuth.SocialClients {
         public string UserName {
             get {
                 if ( this._userName == null ) {
-                    if ( !this.CurrentlyHasAccessToken )
-                        throw new Exception("Must login first");
+                    ValidateSession();
 
-                    this._userName
-                        = this.RequestJson(
-                            HttpRequestMethod.GET,
-                            "1.1/account/settings.json"
-                        ).Response.SelectToken("$.screen_name").ToString();
+                    if ( this._userName == null )
+                        throw new OAuthUnexpectedResponse();
                 }
 
                 return this._userName;
             }
         }
         private string _userName;
+
+        public string UserID {
+            get {
+                if ( this._userID == null && ! this.ValidateSession() )
+                        throw new OAuthUnexpectedResponse();
+
+                return this._userID;
+            }
+        }
+        private string _userID;
+
+        public bool ValidateSession() {
+            if ( !this.CurrentlyHasAccessToken )
+                throw new Exception("Must login first");
+
+            var jsonResponse = this.RequestJson(
+                HttpRequestMethod.GET,
+                "1.1/account/verify_credentials.json"
+            ).Response;
+
+            this._userName = jsonResponse.SelectToken("$.screen_name").ToString();
+            this._userID   = jsonResponse.SelectToken("$.id").ToString();
+
+            return !(
+                string.IsNullOrEmpty(this._userName)
+                || string.IsNullOrEmpty(this._userID)
+            );
+        }
     }
 }
