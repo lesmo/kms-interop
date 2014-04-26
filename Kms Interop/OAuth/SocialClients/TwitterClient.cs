@@ -9,6 +9,12 @@ namespace Kms.Interop.OAuth.SocialClients {
     ///     Cliente del Twitter API
     /// </summary>
     public class TwitterClient : OAuth.OAuthClient, IOAuthSocialClient {
+        public override String ProviderName {
+            get {
+                return "Twitter";
+            }
+        }
+        
         /// <summary>
         ///     Crea una nueva instancia del Cliente del Twitter API.
         /// </summary>

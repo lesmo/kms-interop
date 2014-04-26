@@ -11,7 +11,7 @@ namespace Kms.Interop.OAuth.Utils {
         ///     éste elemento de la enumeración
         /// </summary>
         public static string CamelCaseToUnderlineString(this Enum thisEnum) {
-            return (new Regex("([A-Z])")).Replace(
+            return new Regex("([A-Z])").Replace(
                 thisEnum.ToString(),
                 "_$1"
             ).Substring(1).ToLower();

@@ -35,6 +35,7 @@ namespace KMS.Comm.InnerCore.CommandResponse {
         private ReadDataResponseContent _commandContent;
 
         public ReadDataResponse() {
+            throw new NotSupportedException("Cannot create instance of object without a base date.");
         }
         public ReadDataResponse(DateTime baseDate) {
             this._commandContent

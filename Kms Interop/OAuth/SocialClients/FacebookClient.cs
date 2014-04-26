@@ -17,6 +17,12 @@ namespace Kms.Interop.OAuth.SocialClients {
     }
 
     public class FacebookClient /*: OAuth2.OAuth2Client */ : IOAuthSocialClient {
+        public String ProviderName {
+            get {
+                return "Facebook";
+            }
+        }
+
         public OAuthClientUris ClientUris {
             get;
             set;
@@ -66,7 +72,7 @@ namespace Kms.Interop.OAuth.SocialClients {
 
         public string Code {
             get;
-            private set;
+            set;
         }
 
         public bool CurrentlyHasAccessToken {
@@ -240,9 +246,7 @@ namespace Kms.Interop.OAuth.SocialClients {
             // -- Validar que se tengan API-Key y Token --
             if ( this.ConsumerCredentials == null )
                 throw new OAuthConsumerKeySetInvalid();
-            if ( this.Token == null )
-                throw new OAuthTokenNotSet();
-
+            
             // -- Crear URI de Petición --
             Uri requestUri
                 = new Uri(this.ClientUris.BaseUri, resource);

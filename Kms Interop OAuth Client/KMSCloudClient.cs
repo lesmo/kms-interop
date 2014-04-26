@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using Kms.Interop.OAuth.SocialClients;
 
 namespace Kms.Interop.CloudClient {
     public class KMSCloudClient : OAuthClient {
@@ -193,46 +194,47 @@ namespace Kms.Interop.CloudClient {
         /// <summary>
         ///     Realizar un Inicio de Sesión en la Nube de KMS con un Servicio OAuth de Terceros.
         /// </summary>
-        /// <param name="party">
-        ///     Servicio de un Tercero a utilizar para el inicio de Sesión
+        /// <param name="oAuthClient">
+        ///     Objeto de Cliente IOAuthSocial.
         /// </param>
-        /// <param name="oAuthToken">
-        ///     Access Token OAuth del Servicio
-        /// </param>
-        /// <param name="oAuthTokenSecret">
-        ///     Token Secret OAuth del Servicio
-        /// </param>
+        /// <remarks>
+        ///     Facebook, y todos los futuros servicios que implementan OAuth 2.0 no utilizan el Token
+        ///     Secret del protocolo OAuth 1.0a, por lo que DEBE omitirase en esos casos.
+        /// </remarks>
         /// <returns>
         ///     Devuelve el conjunto de Token y Token Secret generados por la Nube de KMS. El conjunto
         ///     también se establece automáticamente de forma interna para peticiones subsecuentes.
         /// </returns>
-        /// <remarks>
-        ///     Facebook, y todos los futuros servicios que implementan OAuth 2.0 no utilizan el Token
-        ///     Secret del protocolo OAuth 1.0a, por lo que DEBE omitirase en esos casos. La Nube de KMS
-        ///     conoce éste comportamiento, y no debería existir ningún problema.
-        /// </remarks>
-        public OAuthCryptoSet Login3rdParty(
-            OAuth3rdParties party,
-            OAuthCryptoSet oAuthToken
-        ) {
+        public OAuthCryptoSet Login3rdParty<T>(T oAuthClient) where T : IOAuthSocialClient {
             if ( this.Token != null || this.ConsumerCredentials == null )
                 throw new OAuthUnexpectedRequest();
 
-            NameValueCollection requestParameters
-                = new NameValueCollection() {
-                    {"oauth_token", oAuthToken.Key}
-                };
+            NameValueCollection requestParameters;
+            
+            if ( oAuthClient is FacebookClient ) {
+                requestParameters = 
+                    new NameValueCollection {
+                        {"ID", oAuthClient.UserID},
+                        {"Code", (oAuthClient as FacebookClient).Code}
+                    };
+            } else {
+                requestParameters =
+                    new NameValueCollection {
+                        {"Token", oAuthClient.Token.Key},
+                        {"TokenSecret", oAuthClient.Token.Secret},
+                        {"ID", oAuthClient.UserID}
+                    };
+            }
 
-            if ( !string.IsNullOrEmpty(oAuthToken.Secret) )
-                requestParameters.Add("oauth_token_secret", oAuthToken.Secret);
+            string requestUrl = string.Format(
+                (this.ClientUris as KMSCloudUris).KmsOAuth3rdLogin,
+                oAuthClient.ProviderName.ToLower(CultureInfo.InvariantCulture)
+            );
 
-            OAuthResponse<NameValueCollection> response
-                = this.RequestSimpleNameValue(
+            OAuthResponse<NameValueCollection> response =
+                this.RequestSimpleNameValue(
                     HttpRequestMethod.POST,
-                    string.Format(
-                        (this.ClientUris as KMSCloudUris).KmsOAuth3rdLogin,
-                        party.ToString().ToLower()
-                    ),
+                    requestUrl,
                     requestParameters
                 );
 
@@ -265,6 +267,29 @@ namespace Kms.Interop.CloudClient {
         }
 
         /// <summary>
+        ///     Realizar un Inicio de Sesión en la Nube de KMS con un Servicio OAuth de Terceros.
+        /// </summary>
+        /// <param name="oAuthClient">
+        ///     Objeto de Cliente IOAuthSocial.
+        /// </param>
+        /// <remarks>
+        ///     Facebook, y todos los futuros servicios que implementan OAuth 2.0 no utilizan el Token
+        ///     Secret del protocolo OAuth 1.0a, por lo que DEBE omitirase en esos casos.
+        /// </remarks>
+        /// <returns>
+        ///     Devuelve el conjunto de Token y Token Secret generados por la Nube de KMS. El conjunto
+        ///     también se establece automáticamente de forma interna para peticiones subsecuentes.
+        /// </returns>
+        public OAuthCryptoSet Login3rdParty(object oAuthClient) {
+            if ( oAuthClient is FacebookClient )
+                return this.Login3rdParty<FacebookClient>(oAuthClient as FacebookClient);
+            else if ( oAuthClient is TwitterClient )
+                return this.Login3rdParty<TwitterClient>(oAuthClient as TwitterClient);
+            else
+                return this.Login3rdParty<IOAuthSocialClient>(oAuthClient as IOAuthSocialClient);
+        }
+
+        /// <summary>
         ///     Realizar un Cierre de Sesión de la Nube de KMS.
         /// </summary>
         /// <returns>
@@ -281,6 +306,53 @@ namespace Kms.Interop.CloudClient {
                 );
 
             return response.StatusCode == HttpStatusCode.NoContent;
+        }
+
+        public void AddOAuth3rd<T>(T oAuthClient) where T : IOAuthSocialClient {
+            if ( this.Token == null || this.ConsumerCredentials == null )
+                throw new OAuthUnexpectedRequest();
+
+            NameValueCollection requestParameters;
+
+            if ( oAuthClient is FacebookClient ) {
+                requestParameters =
+                    new NameValueCollection {
+                        {"ID", oAuthClient.UserID},
+                        {"Code", (oAuthClient as FacebookClient).Code}
+                    };
+            } else {
+                requestParameters =
+                    new NameValueCollection {
+                        {"Token", oAuthClient.Token.Key},
+                        {"TokenSecret", oAuthClient.Token.Secret},
+                        {"ID", oAuthClient.UserID}
+                    };
+            }
+
+            string requestUrl = string.Format(
+                (this.ClientUris as KMSCloudUris).KmsOAuth3rdAdd,
+                oAuthClient.ProviderName.ToLower(CultureInfo.InvariantCulture)
+            );
+
+            OAuthResponse<string> response = this.RequestString(
+                HttpRequestMethod.POST,
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    (this.ClientUris as KMSCloudUris).KmsOAuth3rdAdd,
+                    oAuthClient.ProviderName.ToLower(CultureInfo.InvariantCulture)
+                ),
+                requestParameters
+            );
+
+            if (
+                response.StatusCode == HttpStatusCode.OK
+                || response.StatusCode == HttpStatusCode.Created
+                || response.StatusCode == HttpStatusCode.NotFound
+            ) {
+                return;
+            } else {
+                throw new KMSScrewYou();
+            }
         }
     }
 }

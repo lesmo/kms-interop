@@ -21,6 +21,11 @@ namespace Kms.Interop.OAuth {
     /// </summary>
     public class OAuthClient : IOAuthClient {
         #region Properties
+        public virtual String ProviderName {
+            get;
+            set;
+        }
+
         /// <summary>
         ///     Información de la ubicación de diversos recursos HTTP necesarios para el flujo
         ///     básico e inicial del protocolo OAuth.
@@ -41,9 +46,17 @@ namespace Kms.Interop.OAuth {
         ///     Token y Token Secret. Esta propiedad almacena el Request Token y Access Token.
         /// </summary>
         public OAuthCryptoSet Token {
-            get;
-            set;
+            get {
+                return this._token;
+            }
+            set {
+                if ( value == null )
+                    this.CurrentlyHasAccessToken = false;
+                
+                this._token = value;
+            }
         }
+        private OAuthCryptoSet _token;
         /// <summary>
         ///     Devuelve si el Token y Token Secret actualmente en ésta instancia corresponden a un
         ///     conjunto de Access Token, que pueden acceder a todos los recursos del API.
@@ -154,7 +167,7 @@ namespace Kms.Interop.OAuth {
                     Uri.EscapeDataString(requestUri.AbsoluteUri),
                     Uri.EscapeDataString(parameterString)
                 );
-
+            
             return System.Text.Encoding.UTF8.GetBytes(
                 signatureBaseString
             );
@@ -393,12 +406,10 @@ namespace Kms.Interop.OAuth {
                 = new NameValueCollection();
 
             if ( oAuthExtraParameters != null )
-                oAuthParameters.AddFromDictionary(
-                    oAuthExtraParameters
-                );
+                oAuthParameters.AddFromDictionary(oAuthExtraParameters);
 
             oAuthParameters.Add(
-                new NameValueCollection() {
+                new NameValueCollection {
                     {"oauth_consumer_key", this.ConsumerCredentials.Key},
                     {"oauth_nonce", nonce},
                     {"oauth_signature_method", this.SignatureMethod},
@@ -411,8 +422,7 @@ namespace Kms.Interop.OAuth {
                 oAuthParameters.Add("oauth_token", this.Token.Key);
 
             // -- Generar base para Firma de Petición --
-            NameValueCollection oAuthSignatureBaseParameters
-                = new NameValueCollection();
+            var oAuthSignatureBaseParameters = new NameValueCollection();
 
             oAuthSignatureBaseParameters.Add(oAuthParameters);
 
@@ -538,10 +548,15 @@ namespace Kms.Interop.OAuth {
                 HttpWebResponse response
                     = ex.Response as HttpWebResponse;
 
-                if ( response.StatusCode == HttpStatusCode.Unauthorized )
+                if ( response == null ) {
+                    throw new OAuthUnexpectedResponse();
+                } else if ( response.StatusCode == HttpStatusCode.Unauthorized ) {
+                    this.Token = null;
+                    this.CurrentlyHasAccessToken = false;
                     throw new OAuthUnauthorized();
-                else
+                } else {
                     return response;
+                }
             }
         }
         

@@ -16,5 +16,10 @@ namespace Kms.Interop.CloudClient {
             get;
             set;
         }
+
+        public string KmsOAuth3rdAdd {
+            get;
+            set;
+        }
     }
 }
