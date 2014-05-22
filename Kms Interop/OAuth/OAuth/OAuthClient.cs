@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -295,7 +294,7 @@ namespace Kms.Interop.OAuth {
                 string.Format(
                     "{0}{1}oauth_token={2}",
                     baseAuthorizationUri.AbsoluteUri,
-                    baseAuthorizationUri.AbsoluteUri.Contains('?')
+                    baseAuthorizationUri.AbsoluteUri.IndexOf('?') > -1
                         ? "&"
                         : "?",
                     requestToken.Key
@@ -338,7 +337,7 @@ namespace Kms.Interop.OAuth {
                 = response.Response.Get("oauth_token_secret");
 
             if ( string.IsNullOrEmpty(token) || string.IsNullOrEmpty(tokenSecret) )
-                throw new OAuthUnexpectedResponse();
+                throw new OAuthUnexpectedResponse<NameValueCollection>(response);
 
             this.Token
                 = new OAuthCryptoSet(
@@ -380,7 +379,7 @@ namespace Kms.Interop.OAuth {
             Dictionary<string, string> oAuthExtraParameters = null,
             Dictionary<HttpRequestHeader, string> requestHeaders = null
         ) {
-            // -- Validar que se tengan API-Key y Token --
+            // -- Validar que se tengan API-Key --
             if ( this.ConsumerCredentials == null )
                 throw new OAuthConsumerKeySetInvalid();
 
@@ -472,7 +471,7 @@ namespace Kms.Interop.OAuth {
                     string.Format(
                         "{0}{1}{2}",
                         requestUri.AbsoluteUri,
-                        requestUri.AbsoluteUri.Contains('?')
+                        requestUri.AbsoluteUri.IndexOf('?') > -1
                             ? "&"
                             : "?",
                         requestString
@@ -799,6 +798,55 @@ namespace Kms.Interop.OAuth {
                 response.StatusCode,
                 response.Headers,
                 JObject.Parse(response.Response),
+                response.Response
+            );
+        }
+
+        /// <summary>
+        ///     Realizar una nueva petición al recurso OAuth especificado, deserializando la respuesta en JSON.
+        /// </summary>
+        /// <param name="requestMethod">
+        ///     Método de Petición HTTP.
+        /// </param>
+        /// <param name="resource">
+        ///     Recurso HTTP al que llamar (parte del URI después del dominio).
+        /// </param>
+        /// <param name="parameters">
+        ///     Parámetros a enviar en la petición
+        /// </param>
+        /// <param name="oAuthExtraParameters">
+        ///     Parámetros extra a añadir en la cabecera Authorization de OAuth.
+        /// </param>
+        /// <param name="requestHeaders">
+        ///     Cabeceras HTTP a añadir a la petición.
+        /// </param>
+        /// <returns>
+        ///     Devuelve la respuesta recibida del API.
+        /// </returns>
+        public OAuthResponse<JArray> RequestJsonArray(
+            HttpRequestMethod requestMethod,
+            string resource,
+            NameValueCollection parameters = null,
+            Dictionary<string, string> oAuthExtraParameters = null,
+            Dictionary<HttpRequestHeader, string> requestHeaders = null
+        ) {
+            OAuthResponse<string> response
+                = this.RequestString(
+                    requestMethod,
+                    resource,
+                    parameters,
+                    oAuthExtraParameters,
+                    new Dictionary<HttpRequestHeader, string>(
+                        requestHeaders ?? new Dictionary<HttpRequestHeader, string>()
+                    ) {
+                        {HttpRequestHeader.Accept, "application/json"}
+                    }
+                );
+
+            return new OAuthResponse<JArray>(
+                response.StatusCode,
+                response.Headers,
+                JArray.Parse(response.Response),
                 response.Response
             );
         }

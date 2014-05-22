@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 using System.Text;
 using Kms.Interop.OAuth.Utils;
 using System.Net;
@@ -257,7 +257,7 @@ namespace Kms.Interop.OAuth.SocialClients {
                         string.Format(
                             "{0}{1}access_token={2}",
                             requestUri.AbsoluteUri,
-                            requestUri.AbsoluteUri.Contains('?')
+                            requestUri.AbsoluteUri.IndexOf('?') > -1
                                 ? "&"
                                 : "?",
                             this.Token.Key

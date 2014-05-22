@@ -1,48 +1,52 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+
 using System.Text;
 
 namespace KMS.Comm.InnerCore {
-    public abstract class ICoreCommand<T>{
+    public abstract class ICoreCommand<T> : ICoreCommand {
         protected abstract InnerCoreCommand Command {
             get;
         }
-        public abstract ICoreCommandContent<T> CommandContent {
+
+        public virtual ICoreCommandContent CommandContent {
+            get {
+                return (ICoreCommandContent)CommandContent2;
+            }
+            set {
+                CommandContent2 = (ICoreCommandContent<T>)value;
+            }
+        }
+
+        public virtual ICoreCommandContent<T> CommandContent2 {
             get;
             set;
         }
+
         public bool IsValid {
-            get {
-                return this._isValid;
-            }
+            get;
+            private set;
         }
-        private bool _isValid = false;
 
         public ICoreCommand() {
         }
 
         public ICoreCommand(T value) {
-            this.CommandContent.Content = value;
-            this._isValid = true;
+            CommandContent2.Content = value;
+            IsValid = true;
         }
 
         public ICoreCommand(byte[] deserializeBytes) {
-            this.Deserialize(deserializeBytes);
+            Deserialize(deserializeBytes);
         }
 
         public byte[] Serialize() {
-            byte[] contentBytes
-                = this.CommandContent.Serialize();
-            byte[] commandBytes
-                = new byte[contentBytes.Length + 3];
-            int crc
-                = contentBytes.Length + 2;
+            var contentBytes = CommandContent2.Serialize();
+            var commandBytes = new byte[contentBytes.Length + 3];
+            var crcPosition  = contentBytes.Length + 2;
 
-            commandBytes[0]
-                = (byte)this.Command;
-            commandBytes[1]
-                = (byte)contentBytes.Length;
+            commandBytes[0] = (byte)this.Command;
+            commandBytes[1] = (byte)contentBytes.Length;
 
             if ( contentBytes.Length == 0 ) {
                 commandBytes[1] = 0;
@@ -52,49 +56,39 @@ namespace KMS.Comm.InnerCore {
 
             contentBytes.CopyTo(commandBytes, 2);
 
-            commandBytes[crc]
-                = contentBytes[0];
+            commandBytes[crcPosition] = contentBytes[0];
 
             for ( int i = 1; i < contentBytes.Length; i++ )
-                commandBytes[crc]
-                    = (byte)(commandBytes[crc] ^ contentBytes[i]);
+                commandBytes[crcPosition] =
+                    (byte)(commandBytes[crcPosition] ^ contentBytes[i]);
 
             return commandBytes;
         }
 
         public void Deserialize(byte[] input) {
-            if ( input == null )
-                return;
-
-            if ( input.Length < 3 )
+            if ( input == null || input.Length < 3 )
                 throw new ArgumentException();
-
-            InnerCoreCommand command
-                = (InnerCoreCommand)Enum.ToObject(
-                    typeof(InnerCoreCommand), 
-                    input[0]
-                );
             
-            if ( command != this.Command )
-                throw new CoreCommandException(command, input);
+            var inputCommand = (InnerCoreCommand)Enum.ToObject(
+                typeof(InnerCoreCommand), 
+                input[0]
+            );
+            
+            if ( inputCommand != Command )
+                throw new CoreCommandException(inputCommand, input);
 
-            byte[] deserializeBytes
-                = new byte[input[1]];
+            var deserializeBytes = new byte[input[1]];
 
             for ( short i = 2, d = 0; i < input[1]; d++, i++ )
                 deserializeBytes[d] = input[i];
 
-            this.CommandContent.Deserialize(
-                deserializeBytes
-            );
+            CommandContent2.Deserialize(deserializeBytes);
 
-            byte tmpCrc
-                = input[2];
+            var tmpCrc = input[2];
             for ( int i = 1; i < input.Length; i++ )
                 tmpCrc = (byte)(tmpCrc ^ input[i]);
 
-            this._isValid
-                = tmpCrc == input[input.Length - 1];
+            IsValid = tmpCrc == input[input.Length - 1];
         }
     }
 }

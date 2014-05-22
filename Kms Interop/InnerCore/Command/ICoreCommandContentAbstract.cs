@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+
 using System.Text;
 
 namespace KMS.Comm.InnerCore {
     public abstract class ICoreCommandContent<T> : ICoreCommandContent {
-        public T Content
-            = default(T);
+        public T Content = default(T);
 
         public ICoreCommandContent() {
         }
+
         public ICoreCommandContent(T content) {
             this.Content = content;
         }

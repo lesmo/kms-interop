@@ -1,18 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+
 using System.Text;
 
 namespace KMS.Comm.InnerCore {
     public class CoreCommandException : Exception {
-        public readonly InnerCoreCommand Command;
-        public readonly byte[] Response;
+        public InnerCoreCommand Command {
+            get;
+            private set;
+        }
+
+        public Byte[] Response {
+            get;
+            private set;
+        }
 
         public CoreCommandException(InnerCoreCommand command, byte[] response) {
-            this.Command
-                = command;
-            this.Response
-                = response;
+            Command  = command;
+            Response = response;
         }
     }
 }
