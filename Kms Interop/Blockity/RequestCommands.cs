@@ -4,9 +4,21 @@ using System.Globalization;
 using System.Text;
 
 namespace KMS.Interop.Blockity {
-    public struct BlockityCommand<T> {
-        public Byte[] RequestBytes;
-        public BlockityCommandDelegate<T> ResponseCommand;
+    public interface IBlockityCommand<T> {
+        Byte[] RequestBytes { get; }
+        BlockityCommandDelegate<T> ResponseCommand { get; }
+    }
+
+    public struct BlockityCommand<T> : IBlockityCommand<T> {
+        public Byte[] RequestBytes {
+            get;
+            internal set;
+        }
+
+        public BlockityCommandDelegate<T> ResponseCommand {
+            get;
+            internal set;
+        }
     }
 
     public delegate T BlockityCommandDelegate<T>(Byte[] input);
@@ -60,17 +72,25 @@ namespace KMS.Interop.Blockity {
         }
 
         public static BlockityCommand<BlockityPin> SetDateTime(DateTime now) {
+            var dateBytes = new Byte[] {
+                (Byte)Int32.Parse(now.ToString("yy")),
+                (Byte)now.Month,
+                (Byte)now.Day,
+                (Byte)now.Hour,
+                (Byte)now.Minute,
+                (Byte)now.Second,
+                now.DayOfWeek == 0 ? (Byte)7 : (Byte)now.DayOfWeek
+            };
+
+            var requestBytes = new Byte[dateBytes.Length + 3];
+            requestBytes[0]  = (Byte)CommandByte.SetDateRequest;
+            requestBytes[1]  = 7;
+            requestBytes[9]  = BlockityHelpers.GetCrc(dateBytes);
+
+            dateBytes.CopyTo(requestBytes, 2);
+
             return new BlockityCommand<BlockityPin> {
-                RequestBytes = new Byte[] {
-                    (Byte)CommandByte.SetDateRequest, 7,
-                    (Byte)Int32.Parse(now.ToString("yy")),
-                    (Byte)now.Month,
-                    (Byte)now.Day,
-                    (Byte)now.Hour,
-                    (Byte)now.Minute,
-                    (Byte)now.Second,
-                    now.DayOfWeek == 0 ? (Byte)7 : (Byte)now.DayOfWeek
-                },
+                RequestBytes    = requestBytes,
                 ResponseCommand = new BlockityCommandDelegate<BlockityPin>(ResponseCommands.SetDateTimeResponse)
             };
         }
