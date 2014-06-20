@@ -548,11 +548,15 @@ namespace Kms.Interop.OAuth {
                     = ex.Response as HttpWebResponse;
 
                 if ( response == null ) {
-                    throw new OAuthUnexpectedResponse();
+                    throw new OAuthUnexpectedResponse((Int32)response.StatusCode, ex);
                 } else if ( response.StatusCode == HttpStatusCode.Unauthorized ) {
-                    this.Token = null;
-                    this.CurrentlyHasAccessToken = false;
-                    throw new OAuthUnauthorized();
+                    Token = null;
+                    CurrentlyHasAccessToken = false;
+
+                    if ( response.Headers[HttpResponseHeader.Warning] == null )
+                        throw new OAuthUnauthorized(response.StatusDescription, ex);
+                    else
+                        throw new OAuthUnauthorized(response.Headers[HttpResponseHeader.Warning], ex);
                 } else {
                     return response;
                 }
