@@ -16,8 +16,12 @@ namespace Kms.Interop.OAuth.Utils {
                 IOrderedEnumerable<string> values
                     = thisCollection.GetValues(key).OrderBy(b => b);
 
-                foreach ( string value in values )
-                    sortedCollection.Add(key, value);
+                if ( values == null ) {
+                    sortedCollection.Add(key, "");
+                } else {
+                    foreach ( string value in values )
+                        sortedCollection.Add(key, value);
+                }
             }
 
             return sortedCollection;
