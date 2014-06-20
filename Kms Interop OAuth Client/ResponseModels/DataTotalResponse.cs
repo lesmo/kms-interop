@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 
@@ -8,10 +9,8 @@ namespace Kms.Interop.CloudClient.ResponseModels {
         /// <summary>
         ///     Distancia total alcanzada corriendo.
         /// </summary>
-        public long RunningTotalDistance {
-            get;
-            set;
-        }
+        public long RunningTotalDistance;
+
         /// <summary>
         ///     Distancia total alcanzada caminando.
         /// </summary>
