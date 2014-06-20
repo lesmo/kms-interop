@@ -32,12 +32,7 @@ namespace KMS.Interop.Blockity {
 
             try {
                 var returnDate = new DateTime(2000 + input[2], input[3], input[4], input[5], input[6], input[7]);
-                var dayOfWeek  = (DayOfWeek)(input[8] == 7 ? 0 : input[8]);
-
-                if ( returnDate.DayOfWeek == dayOfWeek )
-                    return returnDate;
-                else
-                    throw new FormatException("Day of Week reported by device doesn't match DateTime Day of Week.");
+                return returnDate;
             } catch ( Exception ex ) {
                 throw new TypeInitializationException("Command response is invalid", ex);
             }
