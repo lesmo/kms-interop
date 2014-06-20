@@ -83,7 +83,7 @@ namespace Kms.Interop.CloudClient {
 				} else {
 					return false;
 				}
-			} catch ( OAuthUnauthorized ) {
+			} catch ( Exception ex ) {
 				return false;
 			}
 		}
@@ -196,14 +196,16 @@ namespace Kms.Interop.CloudClient {
 				oAuthClient.ProviderName.ToLower(CultureInfo.InvariantCulture)
 			);
 
+			GetRequestToken();
+
 			OAuthResponse<NameValueCollection> response = RequestSimpleNameValue(
 				HttpRequestMethod.POST, requestUrl, requestParameters
 			);
 
 			if (
 				response.StatusCode != HttpStatusCode.OK
-				|| response.StatusCode != HttpStatusCode.Created
-				|| response.StatusCode != HttpStatusCode.NotFound
+				&& response.StatusCode != HttpStatusCode.Created
+				&& response.StatusCode != HttpStatusCode.NotFound
 			) {
 				throw new OAuthUnexpectedResponse<NameValueCollection>(response);
 			}
