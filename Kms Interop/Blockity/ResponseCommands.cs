@@ -9,7 +9,7 @@ namespace KMS.Interop.Blockity {
             if ( input == null || input.Length != 3 )
                 return false;
 
-            if ( input[0] != (Byte)expectedCommand || input[1] != 0 || input[2] != 1 )
+            if ( input[0] != (Byte)expectedCommand || input[1] != 0 )
                 return false;
 
             return true;
@@ -31,7 +31,7 @@ namespace KMS.Interop.Blockity {
                 throw new FormatException("Command response is corrupted");
 
             try {
-                var returnDate = new DateTime(2000 + input[2], input[3], input[4], input[5], input[6], input[7]);
+                var returnDate = new DateTime(2000 + input[2], input[3], input[4], input[5], input[6], input[7], DateTimeKind.Utc);
                 return returnDate;
             } catch ( Exception ex ) {
                 throw new TypeInitializationException("Command response is invalid", ex);
@@ -55,28 +55,38 @@ namespace KMS.Interop.Blockity {
             if ( input == null )
                 throw new ArgumentNullException("input");
 
-            if ( baseDate > DateTime.UtcNow )
-                throw new ArgumentException("Date cannot be in the future.", "baseDate");
+            //if ( baseDate > DateTime.UtcNow )
+            //    throw new ArgumentException("Date cannot be in the future.", "baseDate");
 
-            if ( baseDate < DateTime.UtcNow.AddDays(-6) )
-                throw new ArgumentException("Date cannot be more than a week in the past.", "baseDate");
+            //if ( baseDate < DateTime.UtcNow.AddDays(-6) )
+            //    throw new ArgumentException("Date cannot be more than 7 days in the past.", "baseDate");
             
             if ( ! ValidateResponse(CommandByte.ReadDataResponse, input) )
                 throw new FormatException("Command response is corrupted");
 
-            try {
-                var deviceDate = new DateTime(2000 + input[2], input[3], input[4]);
+            if ( input.Length > 1 && input.Length < 5 )
+                yield break;
+            
+            //try {
+            //    var deviceDate = new DateTime(2000 + input[2], input[3], input[4]);
 
-                if ( deviceDate.Year != baseDate.Year || deviceDate.Month != baseDate.Month || deviceDate.Day != baseDate.Month )
-                    throw new FormatException("Device DateTime is out of sync.");
-            } catch ( Exception ex ) {
-                throw new FormatException("Device DateTime is invalid. See Inner Exception for details.", ex);
-            }
+            //    if ( deviceDate.Year != baseDate.Year || deviceDate.Month != baseDate.Month )
+            //        throw new FormatException("Device DateTime is out of sync.");
+            //} catch ( Exception ex ) {
+            //    throw new FormatException(
+            //        "Device DateTime is invalid. See Inner Exception for details.",
+            //        new InvalidOperationException(
+            //            "Raw Response: "
+            //            + input.Aggregate("", (s, b) => s + b.ToString("X")),
+            //            ex
+            //        )
+            //    );
+            //}
 
-            for ( int m = 0, s = 3; s < input.Length; m+= 2, s += 2 ) {
+            for ( int s = 5; s + 1 < input.Length; s += 2 ) {
                 DataActivity activity;
                 try {
-                    activity = (DataActivity)(Int32)input[s];
+                    activity = (DataActivity)input[s];
                 } catch ( Exception ex ) {
                     throw new FormatException(
                         "Device reported data contains an unrecognized Activity Type. See inner exception for details.",
@@ -85,9 +95,9 @@ namespace KMS.Interop.Blockity {
                 }
 
                 yield return new Data {
-                    Activity = activity,
-                    Steps    = (Int16)input[s + 1],
-                    Timestamp = baseDate = baseDate.AddMinutes(m)
+                    Activity  = activity,
+                    Steps     = input[s + 1],
+                    Timestamp = baseDate = baseDate.AddMinutes(2)
                 };
             }
         }

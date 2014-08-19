@@ -100,11 +100,12 @@ namespace KMS.Interop.Blockity {
         }
 
         public static BlockityCommand<IEnumerable<Data>> GetData(DateTime date, Byte hoursToRead) {
-            if ( date > DateTime.UtcNow )
-                throw new ArgumentException("Date to start Data Read cannot be in the future.", "date");
+            // TODO: Éstas validaciones DEBEN tomar en cuenta la fecha y hora del aparato... hay que averguar cómo
+            //if ( date > DateTime.UtcNow )
+            //    throw new ArgumentException("Date to start Data Read cannot be in the future.", "date");
 
-            if ( date < DateTime.UtcNow.AddDays(-6) )
-                throw new ArgumentException("Date to start Data Read cannot be greater than 7 days in the past.", "date");
+            //if ( date < DateTime.UtcNow.AddDays(-6) )
+            //    throw new ArgumentException("Date to start Data Read cannot be greater than 7 days in the past.", "date");
 
             if ( hoursToRead > 3 )
                 throw new ArgumentException("Hours to Read cannot be greater than 3.", "hoursToRead");
