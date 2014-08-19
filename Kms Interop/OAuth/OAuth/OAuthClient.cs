@@ -548,7 +548,7 @@ namespace Kms.Interop.OAuth {
                     = ex.Response as HttpWebResponse;
 
                 if ( response == null ) {
-                    throw new OAuthUnexpectedResponse((Int32)response.StatusCode, ex);
+                    throw new OAuthUnexpectedResponse(ex);
                 } else if ( response.StatusCode == HttpStatusCode.Unauthorized ) {
                     Token = null;
                     CurrentlyHasAccessToken = false;
