@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using Kms.Interop.OAuth.SocialClients;
+using System.Security.Cryptography;
 
 namespace Kms.Interop.CloudClient {
 	public class KMSCloudClient : OAuthClient {
@@ -58,7 +59,7 @@ namespace Kms.Interop.CloudClient {
 				throw new OAuthUnexpectedResponse<NameValueCollection>(response);
 			}
 		}
-
+			
 		/// <summary>
 		///     Determina si la sesión actual es válida.
 		/// </summary>
@@ -318,6 +319,40 @@ namespace Kms.Interop.CloudClient {
 					throw new KMSWrongUserCredentials("Social Token already in use");
 			} else {
 				throw new OAuthUnexpectedResponse<String>(response);
+			}
+		}
+
+		public Uri GetWebAutoLoginUri() {
+			if ( this.Token == null || this.ConsumerCredentials == null )
+				throw new OAuthUnexpectedRequest("No Token or Consumer Credentials set before calling.");
+
+			var response = RequestJson(
+				HttpRequestMethod.GET,
+				(this.ClientUris as KMSCloudUris).WebAutoLoginTokenGet
+			);
+
+			if (
+				response.StatusCode == HttpStatusCode.OK
+				|| response.StatusCode == HttpStatusCode.Created
+			) {
+				var hmacSha1Key = ConsumerCredentials.Secret + "&" + Token.Secret;
+				var hmacSha1    = new HMACSHA1(Encoding.UTF8.GetBytes(hmacSha1Key));
+				var hmacSha1Bytes = hmacSha1.ComputeHash(
+					Encoding.UTF8.GetBytes((String)response.Response["AutoLoginSecret"])
+				);
+				var hmacSha1String = new StringBuilder(hmacSha1Bytes.Length * 2);
+
+				for ( int i = 0; i < hmacSha1Bytes.Length; i++ )
+					hmacSha1String.Append(hmacSha1Bytes[i].ToString("x2"));
+
+				return new Uri(
+					String.Format(
+						(String)response.Response["UriMask"],
+						hmacSha1String.ToString()
+					)
+				);
+			} else {
+				throw new OAuthUnexpectedResponse((Int32)response.StatusCode, response.RawResponse);
 			}
 		}
 	}

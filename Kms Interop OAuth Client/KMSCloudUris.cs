@@ -21,5 +21,10 @@ namespace Kms.Interop.CloudClient {
             get;
             set;
         }
+
+        public string WebAutoLoginTokenGet {
+            get;
+            set;
+        }
     }
 }
