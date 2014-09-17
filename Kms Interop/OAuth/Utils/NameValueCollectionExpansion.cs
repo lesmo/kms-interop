@@ -3,18 +3,20 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
+using KMS.Interop.OAuth.Utils;
 
 namespace Kms.Interop.OAuth.Utils {
     public static class NameValueCollectionExpansion {
+        
         public static NameValueCollection SortByName(this NameValueCollection thisCollection) {
             NameValueCollection sortedCollection
                 = new NameValueCollection();
             IOrderedEnumerable<string> keys
-                = thisCollection.AllKeys.OrderBy(b => b);
+                = thisCollection.AllKeys.OrderBy(b => b, new LexicographicalComparer());
 
             foreach ( string key in keys ) {
                 IOrderedEnumerable<string> values
-                    = thisCollection.GetValues(key).OrderBy(b => b);
+                    = thisCollection.GetValues(key).OrderBy(b => b, new LexicographicalComparer());
 
                 if ( values == null ) {
                     sortedCollection.Add(key, "");
