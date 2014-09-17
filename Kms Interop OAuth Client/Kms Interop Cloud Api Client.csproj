@@ -53,7 +53,6 @@
     <Compile Include="KMSCloudUris.cs" />
     <Compile Include="KMSWrongUserCredentials.cs" />
     <Compile Include="OAuth3rdParties.cs" />
-    <Compile Include="ResponseModels\DataTotalResponse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -61,9 +60,6 @@
       <Project>{599494b1-8d7f-44df-9d70-f0e2b8d118f0}</Project>
       <Name>Kms Interop</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
