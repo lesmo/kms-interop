@@ -49,7 +49,10 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="OAuth\OAuth\OAuthClient_Tests.cs" />
     <Compile Include="OAuth\Utils\EnumExpansion_Tests.cs" />
+    <Compile Include="OAuth\Utils\LexicographicalComparer_Tests.cs" />
+    <Compile Include="OAuth\Utils\NameValueCollectionExpansion_Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
