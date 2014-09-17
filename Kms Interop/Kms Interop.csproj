@@ -73,7 +73,7 @@
     <Compile Include="OAuth\OAuthClientUris.cs" />
     <Compile Include="OAuth\OAuthCryptoSet.cs" />
     <Compile Include="OAuth\OAuthResponse.cs" />
-    <Compile Include="OAuth\OAuthTokenNotSet.cs" />
+    <Compile Include="OAuth\Exceptions\OAuthTokenNotSet.cs" />
     <Compile Include="OAuth\OAuth\OAuthClient.cs" />
     <Compile Include="OAuth\OAuth\OAuthClientUrisNotSet.cs" />
     <Compile Include="OAuth\SocialClients\FacebookClient.cs" />
