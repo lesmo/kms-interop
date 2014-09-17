@@ -1,20 +1,18 @@
-﻿using Kms.Interop.OAuth;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
+
+using Newtonsoft.Json.Linq;
 
 namespace Kms.Interop.OAuth.SocialClients {
+
     /// <summary>
     ///     Cliente del Twitter API
     /// </summary>
-    public class TwitterClient : OAuth.OAuthClient, IOAuthSocialClient {
-        public override String ProviderName {
-            get {
-                return "Twitter";
-            }
-        }
-        
+    public class TwitterClient : OAuthClient, IOAuthSocialClient {
+
+        private string _userID;
+        private string _userName;
+
         /// <summary>
         ///     Crea una nueva instancia del Cliente del Twitter API.
         /// </summary>
@@ -24,34 +22,19 @@ namespace Kms.Interop.OAuth.SocialClients {
         /// <param name="token">
         ///     Conjunto de Token y Token Secret.
         /// </param>
-        public TwitterClient(
-            OAuthCryptoSet consumer,
-            OAuthCryptoSet token = null,
-            Uri callbackUri = null
-        ) : base(
-            new OAuthClientUris() {
-                BaseUri
-                    = new Uri("https://api.twitter.com/"),
-                AuthorizationResource
-                    = "oauth/authorize",
-                ExchangeTokenResource
-                    = "oauth/access_token",
-                RequestTokenResource
-                    = "oauth/request_token",
-                CallbackRequestTokenUri
-                    = callbackUri
+        public TwitterClient(OAuthCryptoSet consumer, OAuthCryptoSet token = null, Uri callbackUri = null)
+            : base(new OAuthClientUris {
+                BaseUri = new Uri("https://api.twitter.com/"),
+                AuthorizationResource = "oauth/authorize",
+                ExchangeTokenResource = "oauth/access_token",
+                RequestTokenResource = "oauth/request_token",
+                CallbackRequestTokenUri = callbackUri
             },
-            consumer,
-            token
-        ) {
-        }
+                consumer,
+                token) {}
 
-        public override OAuthCryptoSet ExchangeRequestToken(string verifier) {
-            base.ExchangeRequestToken(verifier);
-
-            this.UserName.Count(); // forzar get de UserName
-
-            return this.Token;
+        public override String ProviderName {
+            get { return "Twitter"; }
         }
 
         /// <summary>
@@ -59,44 +42,47 @@ namespace Kms.Interop.OAuth.SocialClients {
         /// </summary>
         public string UserName {
             get {
-                if ( this._userName == null ) {
-                    ValidateSession();
+                if ( _userName != null )
+                    return _userName;
+                
+                ValidateSession();
 
-                    if ( this._userName == null )
-                        throw new OAuthUnexpectedResponse();
-                }
-
-                return this._userName;
+                if ( _userName == null )
+                    throw new OAuthUnexpectedResponse();
+                
+                return _userName;
             }
         }
-        private string _userName;
 
         public string UserID {
             get {
-                if ( this._userID == null && ! this.ValidateSession() )
-                        throw new OAuthUnexpectedResponse();
+                if ( _userID == null && ! ValidateSession() )
+                    throw new OAuthUnexpectedResponse();
 
-                return this._userID;
+                return _userID;
             }
         }
-        private string _userID;
 
         public bool ValidateSession() {
-            if ( !this.CurrentlyHasAccessToken )
+            if ( !CurrentlyHasAccessToken )
                 throw new Exception("Must login first");
 
-            var jsonResponse = this.RequestJson(
-                HttpRequestMethod.GET,
-                "1.1/account/verify_credentials.json"
-            ).Response;
+            var jsonResponse = RequestJson(HttpRequestMethod.GET, "1.1/account/verify_credentials.json").Response;
 
-            this._userName = jsonResponse.SelectToken("$.screen_name").ToString();
-            this._userID   = jsonResponse.SelectToken("$.id").ToString();
+            _userName = jsonResponse.SelectToken("$.screen_name").ToString();
+            _userID = jsonResponse.SelectToken("$.id").ToString();
 
-            return !(
-                string.IsNullOrEmpty(this._userName)
-                || string.IsNullOrEmpty(this._userID)
-            );
+            return !(string.IsNullOrEmpty(_userName) || string.IsNullOrEmpty(_userID));
+        }
+
+        public override OAuthCryptoSet ExchangeRequestToken(string verifier) {
+            base.ExchangeRequestToken(verifier);
+
+            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+            UserName.Count(); // forzar get de UserName
+
+            return Token;
         }
     }
+
 }

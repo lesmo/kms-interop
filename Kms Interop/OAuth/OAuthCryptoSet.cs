@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Kms.Interop.OAuth {
 
-namespace Kms.Interop.OAuth {
     /// <summary>
     ///     Representa el conjunto de Token y Secret, o Consumer Key (API-Key de KMS)
     ///     y Secret (API-Secret de KMS) de OAuth
@@ -12,6 +9,7 @@ namespace Kms.Interop.OAuth {
         ///     Token o Consumer Key de OAuth (API-Key de KMS)
         /// </summary>
         public readonly string Key;
+
         /// <summary>
         ///     Token Secret o Consumer Secret de OAuth (API-Secret de KMS)
         /// </summary>
@@ -28,10 +26,9 @@ namespace Kms.Interop.OAuth {
         ///     Token Secret o Consumer Secret (API Secret de KMS)
         /// </param>
         public OAuthCryptoSet(string key, string secret = null) {
-            this.Key
-                = key;
-            this.Secret
-                = secret;
+            Key    = key;
+            Secret = secret;
         }
     }
+
 }

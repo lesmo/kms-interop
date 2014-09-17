@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Kms.Interop.OAuth.SocialClients {
 
-namespace Kms.Interop.OAuth.SocialClients {
     public enum FacebookPermission {
         /// <summary>
         ///     Acceso a información Básica del Usuario, como: id, nombre, username,
@@ -359,4 +356,5 @@ namespace Kms.Interop.OAuth.SocialClients {
         /// </summary>
         FriendsGamesActivity
     }
+
 }

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace Kms.Interop.OAuth.OAuth2 {
 
-using System.Text;
+    public class OAuth2Client {}
 
-namespace Kms.Interop.OAuth.OAuth2 {
-    public class OAuth2Client {
-        
-    }
 }

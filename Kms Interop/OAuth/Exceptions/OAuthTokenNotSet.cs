@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Kms.Interop.OAuth {
-    public class OAuthTokenNotSet : Exception {
-    }
+
+    public class OAuthTokenNotSet : Exception {}
+
 }

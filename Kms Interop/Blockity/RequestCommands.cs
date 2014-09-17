@@ -1,24 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 namespace KMS.Interop.Blockity {
+
     public interface IBlockityCommand<T> {
         Byte[] RequestBytes { get; }
         BlockityCommandDelegate<T> ResponseCommand { get; }
     }
 
     public struct BlockityCommand<T> : IBlockityCommand<T> {
-        public Byte[] RequestBytes {
-            get;
-            internal set;
-        }
+        public Byte[] RequestBytes { get; internal set; }
 
-        public BlockityCommandDelegate<T> ResponseCommand {
-            get;
-            internal set;
-        }
+        public BlockityCommandDelegate<T> ResponseCommand { get; internal set; }
     }
 
     public delegate T BlockityCommandDelegate<T>(Byte[] input);
@@ -29,14 +23,16 @@ namespace KMS.Interop.Blockity {
     /// </summary>
     public static class RequestCommands {
         public static BlockityCommand<Boolean> SetName(String newName) {
-            if ( String.IsNullOrEmpty(newName) )
+            if ( String.IsNullOrEmpty(newName) ) {
                 throw new ArgumentException("Name is either null or empty.", "newName");
+            }
 
-            Byte[] newNameBytes = Encoding.ASCII.GetBytes(newName.PadRight(15, '#'));
-            if ( newNameBytes.Length != 15 )
+            byte[] newNameBytes = Encoding.ASCII.GetBytes(newName.PadRight(15, '#'));
+            if ( newNameBytes.Length != 15 ) {
                 throw new ArgumentException("Name is greater than 15 bytes in length.", "newName");
+            }
 
-            Byte[] command = new Byte[18];
+            var command = new Byte[18];
             command[0] = (Byte)CommandByte.SetBluetoothNameRequest;
             command[1] = 0x0F;
 
@@ -45,9 +41,7 @@ namespace KMS.Interop.Blockity {
 
             return new BlockityCommand<Boolean> {
                 RequestBytes = command,
-                ResponseCommand = new BlockityCommandDelegate<Boolean>((Byte[] input) => {
-                    return ResponseCommands.SimpleResponse(CommandByte.SetBluetoothNameResponse, input);
-                })
+                ResponseCommand = input => ResponseCommands.SimpleResponse(CommandByte.SetBluetoothNameResponse, input)
             };
         }
 
@@ -55,24 +49,36 @@ namespace KMS.Interop.Blockity {
             return new BlockityCommand<Boolean> {
                 RequestBytes = new Byte[] {
                     (Byte)CommandByte.SetBluetoothPinRequest,
-                    4, pin.A, pin.B, pin.C, pin.D,
-                    BlockityHelpers.GetCrc(new Byte[] { pin.A, pin.B, pin.C, pin.D })
+                    4,
+                    pin.A,
+                    pin.B,
+                    pin.C,
+                    pin.D,
+                    BlockityHelpers.GetCrc(
+                        new[] {
+                            pin.A,
+                            pin.B,
+                            pin.C,
+                            pin.D
+                        })
                 },
-                ResponseCommand = new BlockityCommandDelegate<Boolean>((Byte[] input) => {
-                    return ResponseCommands.SimpleResponse(CommandByte.SetBluetoothPinResponse, input);
-                })
+                ResponseCommand = input => ResponseCommands.SimpleResponse(CommandByte.SetBluetoothPinResponse, input)
             };
         }
 
         public static BlockityCommand<DateTime> GetDateTime() {
             return new BlockityCommand<DateTime> {
-                RequestBytes = new Byte[] { (Byte)CommandByte.GetDateRequest, 0, 0 },
-                ResponseCommand = new BlockityCommandDelegate<DateTime>(ResponseCommands.DateTimeResponse)
+                RequestBytes = new Byte[] {
+                    (Byte)CommandByte.GetDateRequest,
+                    0,
+                    0
+                },
+                ResponseCommand = ResponseCommands.DateTimeResponse
             };
         }
 
         public static BlockityCommand<BlockityPin> SetDateTime(DateTime now) {
-            var dateBytes = new Byte[] {
+            var dateBytes = new[] {
                 (Byte)Int32.Parse(now.ToString("yy")),
                 (Byte)now.Month,
                 (Byte)now.Day,
@@ -83,15 +89,15 @@ namespace KMS.Interop.Blockity {
             };
 
             var requestBytes = new Byte[dateBytes.Length + 3];
-            requestBytes[0]  = (Byte)CommandByte.SetDateRequest;
-            requestBytes[1]  = 7;
-            requestBytes[9]  = BlockityHelpers.GetCrc(dateBytes);
+            requestBytes[0] = (Byte)CommandByte.SetDateRequest;
+            requestBytes[1] = 7;
+            requestBytes[9] = BlockityHelpers.GetCrc(dateBytes);
 
             dateBytes.CopyTo(requestBytes, 2);
 
             return new BlockityCommand<BlockityPin> {
-                RequestBytes    = requestBytes,
-                ResponseCommand = new BlockityCommandDelegate<BlockityPin>(ResponseCommands.SetDateTimeResponse)
+                RequestBytes = requestBytes,
+                ResponseCommand = ResponseCommands.SetDateTimeResponse
             };
         }
 
@@ -107,58 +113,77 @@ namespace KMS.Interop.Blockity {
             //if ( date < DateTime.UtcNow.AddDays(-6) )
             //    throw new ArgumentException("Date to start Data Read cannot be greater than 7 days in the past.", "date");
 
-            if ( hoursToRead > 3 )
+            if ( hoursToRead > 3 ) {
                 throw new ArgumentException("Hours to Read cannot be greater than 3.", "hoursToRead");
+            }
 
-            if ( hoursToRead < 1 )
+            if ( hoursToRead < 1 ) {
                 throw new ArgumentException("Hours to Read cannot be less than 1.", "hoursToRead");
+            }
 
             var dayOfWeek = (Byte)(date.DayOfWeek == 0 ? 7 : (Int32)date.DayOfWeek);
 
             return new BlockityCommand<IEnumerable<Data>> {
                 RequestBytes = new Byte[] {
                     (Byte)CommandByte.ReadDataRequest,
-                    3, dayOfWeek, (Byte)date.Hour, hoursToRead,
-                    BlockityHelpers.GetCrc(new Byte[] { dayOfWeek, (Byte)date.Hour, hoursToRead })
+                    3,
+                    dayOfWeek,
+                    (Byte)date.Hour,
+                    hoursToRead,
+                    BlockityHelpers.GetCrc(
+                        new[] {
+                            dayOfWeek,
+                            (Byte)date.Hour,
+                            hoursToRead
+                        })
                 },
-                ResponseCommand = new BlockityCommandDelegate<IEnumerable<Data>>((Byte[] input) => {
-                    return ResponseCommands.GetDataResponse(date, input);
-                })
+                ResponseCommand = input => ResponseCommands.GetDataResponse(date, input)
             };
         }
 
         public static BlockityCommand<Byte[]> GetDeviceData(Byte lid) {
             return new BlockityCommand<Byte[]> {
-                RequestBytes = new Byte[] { (Byte)CommandByte.ReadDeviceDataRequest, 1, lid, lid },
-                ResponseCommand = new BlockityCommandDelegate<Byte[]>(ResponseCommands.RawResponse)
+                RequestBytes = new Byte[] {
+                    (Byte)CommandByte.ReadDeviceDataRequest,
+                    1,
+                    lid,
+                    lid
+                },
+                ResponseCommand = ResponseCommands.RawResponse
             };
         }
 
         public static BlockityCommand<Byte> GetBatteryLevel() {
             return new BlockityCommand<Byte> {
-                RequestBytes = new Byte[] { (Byte)CommandByte.ReadDeviceDataRequest, 1, },
-                ResponseCommand = new BlockityCommandDelegate<Byte>((Byte[] input) => {
-                    return ResponseCommands.RawResponse(input)[0];
-                })
+                RequestBytes = new Byte[] {
+                    (Byte)CommandByte.ReadDeviceDataRequest,
+                    1
+                },
+                ResponseCommand = input => ResponseCommands.RawResponse(input)[0]
             };
         }
 
         public static BlockityCommand<Boolean> ClearData() {
             return new BlockityCommand<Boolean> {
-                RequestBytes = new Byte[] { (Byte)CommandByte.ClearDataRequest, 0, 0 },
-                ResponseCommand = new BlockityCommandDelegate<Boolean>((Byte[] input) => {
-                    return ResponseCommands.SimpleResponse(CommandByte.ClearDataRequest, input);
-                })
+                RequestBytes = new Byte[] {
+                    (Byte)CommandByte.ClearDataRequest,
+                    0,
+                    0
+                },
+                ResponseCommand = input => ResponseCommands.SimpleResponse(CommandByte.ClearDataRequest, input)
             };
         }
-        
+
         public static BlockityCommand<Boolean> FactoryReset() {
             return new BlockityCommand<Boolean> {
-                RequestBytes = new Byte[] { (Byte)CommandByte.FactoryResetRequest, 0, 0 },
-                ResponseCommand = new BlockityCommandDelegate<Boolean>((Byte[] input) => {
-                    return ResponseCommands.SimpleResponse(CommandByte.FactoryResetResponse, input);
-                })
+                RequestBytes = new Byte[] {
+                    (Byte)CommandByte.FactoryResetRequest,
+                    0,
+                    0
+                },
+                ResponseCommand = input => ResponseCommands.SimpleResponse(CommandByte.FactoryResetResponse, input)
             };
         }
     }
+
 }

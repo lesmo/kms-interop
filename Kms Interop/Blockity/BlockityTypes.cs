@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace KMS.Interop.Blockity {
+
     public enum CommandByte : byte {
         SetBluetoothNameRequest = 0x81,
         SetBluetoothNameResponse = 0x21,
@@ -50,14 +49,18 @@ namespace KMS.Interop.Blockity {
     }
 
     public struct BlockityPin {
-        public BlockityPin(Byte a, Byte b, Byte c, Byte d) {
-            A = a; B = b; C = c; D = c;
-        }
 
         public Byte A;
         public Byte B;
         public Byte C;
         public Byte D;
+
+        public BlockityPin(Byte a, Byte b, Byte c, Byte d) {
+            A = a;
+            B = b;
+            C = c;
+            D = c;
+        }
     }
 
     public enum DataActivity : byte {
@@ -69,8 +72,9 @@ namespace KMS.Interop.Blockity {
     }
 
     public struct Data {
-        public DateTime Timestamp;
         public DataActivity Activity;
         public Int16 Steps;
+        public DateTime Timestamp;
     }
+
 }
